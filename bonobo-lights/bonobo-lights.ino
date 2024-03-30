@@ -14,13 +14,12 @@ const int nCols = 4;
 int rows[nRows] = { r0, r1, r2, r3 };
 int cols[nCols] = { c0, c1, c2, c3 };
 int all_pins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
-unsigned int frameRate = 1000;
+const unsigned int frameRate = 1000;
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 
 // For performance profiling
-long usefulMicros = 0;
-float switchingFraction = 0.0;
-
+long busyMicros = 0;
+float busyFraction = 0.0;
 
 bool pattern[nRows * nCols];
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
@@ -42,14 +41,13 @@ void setup() {
   }
 
   Serial.begin(115200);
-
+  delay(100);
   Serial.println("Let us play");
-  
+
   start = micros();
 }
 
 void loop() {
-
   now = micros();
   prevRow = currentRow;
   updateState(now);
@@ -57,13 +55,6 @@ void loop() {
   if (currentRow != prevRow) {
     rowShow(currentRow, primes);
   }
-
-
-  if (iteration % nCyclesRefresh == 0 & debug) {
-    report();
-  }
-
-
 
   iteration += 1;
 }
@@ -73,24 +64,19 @@ void updateState(long now) {
   long elapsed = now - start;
   int segment = elapsed / (microsecondsPerFrame / nRows);
 
-  if (debug) {
-    Serial.print("microsecondsPerFrame:");
-    Serial.print(microsecondsPerFrame);
-    Serial.print(" start:");
-    Serial.print(start);
-    Serial.print(" now:");
-    Serial.print(now);
-    Serial.print(" elapsed:");
-    Serial.print(elapsed);
-    Serial.print(" currentRow:");
-    Serial.print(currentRow);
-    Serial.print(" segment:");
-    Serial.println(segment);
-  }
-
   if (segment > 3) {
-    Serial.println("set shit");
     currentRow = 0;
+    busyFraction = double(busyMicros) / double(elapsed);
+
+    // Serial.print("microsecondsPerFrame: ");
+    // Serial.println(microsecondsPerFrame);
+    Serial.print(" busyMicros: ");
+    Serial.print(busyMicros);
+    Serial.print(" elapsed:");
+    Serial.println(elapsed);
+
+
+    busyMicros = 0;
     start = micros();
   } else {
     currentRow = segment;
@@ -98,6 +84,8 @@ void updateState(long now) {
 }
 
 void rowShow(int rowNumber, bool pattern[]) {
+  long thisStart = micros();
+
   allOff();
   digitalWrite(rows[rowNumber], HIGH);
 
@@ -108,6 +96,7 @@ void rowShow(int rowNumber, bool pattern[]) {
     }
   }
 
+  busyMicros += micros() - thisStart;
 }
 
 
@@ -121,11 +110,4 @@ void allOn() {
   for (int i = 0; i < 8; i++) {
     digitalWrite(all_pins[i], HIGH);
   }
-}
-
-void report() {
-  Serial.print("start:");
-  Serial.print(start);
-  Serial.print(" now:");
-  Serial.println(now);
 }
