@@ -32,7 +32,8 @@ int nCyclesRefresh = 10000;
 byte prevRow = 0;
 byte currentRow = 0;
 
-bool debug = true;
+bool debug = false;
+bool performanceProfiling = false;
 
 void setup() {
 
@@ -66,15 +67,13 @@ void updateState(long now) {
 
   if (segment > 3) {
     currentRow = 0;
-    busyFraction = double(busyMicros) / double(elapsed);
 
-    // Serial.print("microsecondsPerFrame: ");
-    // Serial.println(microsecondsPerFrame);
-    Serial.print(" busyMicros: ");
-    Serial.print(busyMicros);
-    Serial.print(" elapsed:");
-    Serial.println(elapsed);
-
+    if (performanceProfiling) {
+      Serial.print(" busyMicros: ");
+      Serial.print(busyMicros);
+      Serial.print(" elapsed:");
+      Serial.println(elapsed);
+    }
 
     busyMicros = 0;
     start = micros();
