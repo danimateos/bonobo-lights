@@ -15,22 +15,17 @@ int rows[nRows] = { r0, r1, r2, r3 };
 int cols[nCols] = { c0, c1, c2, c3 };
 int all_pins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
 
-const unsigned int frameRate = 20;
+const unsigned int frameRate = 60;
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
-const unsigned int refreshRate = 1000;
+const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
-// For performance profiling
-long busyMicros = 0;
-float busyFraction = 0.0;
 
-bool pattern[nRows * nCols];
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
 bool frame[nRows * nCols] = { false };
 
 long iteration = 0;
 long rowStart, now, frameStart;
-int nCyclesRefresh = 10000;
 
 // State machine. A frame is a superstate of which each row
 // represents one of 4 distinct substates, but I'm managing them independently
@@ -38,14 +33,19 @@ long frameNumber = 0;
 byte prevRow = 0;
 byte currentRow = 0;
 
+// For performance profiling
+long busyMicros = 0;
+bool performanceProfiling = true;
 bool debug = false;
-bool performanceProfiling = false;
 
 void setup() {
 
+  // long pins_out = 0;
   for (int i = 0; i < 8; i++) {
+    // pins_out |= (1 << all_pins[i]);
     pinMode(all_pins[i], OUTPUT);
   }
+  // PORT_IOBUS->Group[0].OUTSET.reg = pins_out; // not working yet
 
   Serial.begin(115200);
   delay(100);
@@ -67,16 +67,18 @@ void loop() {
   iteration += 1;
 }
 
+// Keeps track of which frame should be visible now, for movement
 void updateFrameState(long now) {
   long elapsed = now - frameStart;
 
-  if (elapsed > microsecondsPerFrame) {
+  if (elapsed >= microsecondsPerFrame) {
+    updateFrame();
     frameStart = micros();
     frameNumber += 1;
-    updateFrame();
   }
 }
 
+// Keeps track of which row should be active now, for muxing
 void updateRowState(long now) {
   long elapsed = now - rowStart;
   int segment = elapsed / (microsecondsPerRefresh / nRows);
@@ -98,6 +100,7 @@ void updateRowState(long now) {
   }
 }
 
+// Changes the frame in-place
 void updateFrame() {
   memset(frame, 0, sizeof(frame));
 
@@ -114,12 +117,12 @@ void rowShow(int rowNumber, bool pattern[]) {
   long thisStart = micros();
 
   allOff();
-  digitalWrite(rows[rowNumber], HIGH);
+  fastWrite(rows[rowNumber], HIGH);
 
   for (int i = 0; i < nCols; i++) {
     int position = rowNumber * nRows + i;
     if (pattern[position]) {
-      digitalWrite(cols[i], HIGH);
+      fastWrite(cols[i], HIGH);
     }
   }
 
@@ -129,12 +132,20 @@ void rowShow(int rowNumber, bool pattern[]) {
 
 void allOff() {
   for (int i = 0; i < 8; i++) {
-    digitalWrite(all_pins[i], LOW);
+    fastWrite(all_pins[i], LOW);
   }
 }
 
 void allOn() {
   for (int i = 0; i < 8; i++) {
-    digitalWrite(all_pins[i], HIGH);
+    fastWrite(all_pins[i], HIGH);
   }
+}
+
+//  From https://forum.arduino.cc/t/what-is-the-fastest-way-to-read-write-gpios-on-samd21-boards/907133/9
+static inline void fastWrite(int bitnum, int val) {
+  if (val)
+    PORT_IOBUS->Group[0].OUTSET.reg = (1<<bitnum);
+  else
+    PORT_IOBUS->Group[0].OUTCLR.reg = (1<<bitnum);
 }
