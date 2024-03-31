@@ -13,25 +13,38 @@ const int nCols = 4;
 
 int rows[nRows] = { r0, r1, r2, r3 };
 int cols[nCols] = { c0, c1, c2, c3 };
-int all_pins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
+int allOutputPins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
+
+const int hallSensorPin = 8;  // TBD; placeholder
 
 const unsigned int frameRate = 12;
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
-
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
 bool frame[nRows * nCols] = { false };
 
 long iteration = 0;
-long rowStart, now, frameStart;
+long rowStart, now, frameStart, revolutionStart;
+
+// For position estimation with exponential smoothing. In microseconds.
+// Initialize durations to very high values (10^8us) so that there's
+// no graphical updates until after 5 revolutions.
+const int nRevolutionsToConsider = 5;
+const int weights[nRevolutionsToConsider] = { 315, 625, 1250, 2500, 5000 };  // most recent weighs heavier
+const int sumOfWeights = 9690;
+long revolutionDurations[nRevolutionsToConsider] = { 100000000, 100000000, 100000000, 100000000, 100000000 };
+long currentDurationOfRevolution = 100000000;
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
 long frameNumber = 0;
+long revolution = 0;
 byte prevRow = 0;
 byte currentRow = 0;
+bool toggled = false;
+bool prevToggled = false;
 
 // For performance profiling
 long busyMicros = 0;
@@ -40,12 +53,12 @@ bool debug = false;
 
 void setup() {
 
-  // long pins_out = 0;
+  // long pinsOut = 0;
   for (int i = 0; i < 8; i++) {
-    // pins_out |= (1 << all_pins[i]);
-    pinMode(all_pins[i], OUTPUT);
+    // pinsOut |= (1 << allOutputPins[i]);
+    pinMode(allOutputPins[i], OUTPUT);
   }
-  // PORT_IOBUS->Group[0].OUTSET.reg = pins_out; // not working yet
+  // PORT_IOBUS->Group[0].OUTSET.reg = pinsOut; // not working yet
 
   Serial.begin(115200);
   delay(100);
@@ -64,7 +77,42 @@ void loop() {
     rowShow(currentRow, frame);
   }
 
+  updateSensor();
+
   iteration += 1;
+}
+
+void updateSensor() {
+  prevToggled = toggled;
+  toggled = digitalRead(hallSensorPin);
+
+  if (toggled & ~prevToggled) {
+    updateSpeedEstimation();
+    revolution += 1;
+  }
+}
+
+// Exponential smoothing for smoother estimation
+void updateSpeedEstimation() {
+  int offset = revolution % nRevolutionsToConsider;  // circular buffer
+  revolutionDurations[offset] = revolutionStart - micros();
+  revolutionStart = micros();
+
+  long tempEstimation = 0;
+
+  for (int i = 0; i < nRevolutionsToConsider; i++) {
+
+    int whichWeight = (i + ((nRevolutionsToConsider - 1) - offset) ) % nRevolutionsToConsider;  // Black magic. Notes on Remarkable
+
+    tempEstimation += weights[whichWeight] * revolutionDurations[i];
+  }
+
+  currentDurationOfRevolution = tempEstimation / sumOfWeights;
+}
+
+// Fractions of a revolution
+int currentPosition() {
+  return (revolutionStart - micros()) / currentDurationOfRevolution;
 }
 
 // Keeps track of which frame should be visible now, for movement
@@ -153,13 +201,13 @@ void rowShow(int rowNumber, bool pattern[]) {
 
 void allOff() {
   for (int i = 0; i < 8; i++) {
-    fastWrite(all_pins[i], LOW);
+    fastWrite(allOutputPins[i], LOW);
   }
 }
 
 void allOn() {
   for (int i = 0; i < 8; i++) {
-    fastWrite(all_pins[i], HIGH);
+    fastWrite(allOutputPins[i], HIGH);
   }
 }
 
