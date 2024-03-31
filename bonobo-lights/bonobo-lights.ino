@@ -14,8 +14,11 @@ const int nCols = 4;
 int rows[nRows] = { r0, r1, r2, r3 };
 int cols[nCols] = { c0, c1, c2, c3 };
 int all_pins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
-const unsigned int frameRate = 1000;
+
+const unsigned int frameRate = 20;
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
+const unsigned int refreshRate = 1000;
+unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
 // For performance profiling
 long busyMicros = 0;
@@ -23,12 +26,15 @@ float busyFraction = 0.0;
 
 bool pattern[nRows * nCols];
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
+bool frame[nRows * nCols] = { false };
 
 long iteration = 0;
-long start, end, now;
+long rowStart, now, frameStart;
 int nCyclesRefresh = 10000;
 
-// State machine
+// State machine. A frame is a superstate of which each row
+// represents one of 4 distinct substates, but I'm managing them independently
+long frameNumber = 0;
 byte prevRow = 0;
 byte currentRow = 0;
 
@@ -44,28 +50,38 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   Serial.println("Let us play");
-
-  start = micros();
+  rowStart = micros();
+  frameStart = rowStart;
 }
 
 void loop() {
   now = micros();
   prevRow = currentRow;
-  updateState(now);
+  updateRowState(now);
+  updateFrameState(now);
 
   if (currentRow != prevRow) {
-    rowShow(currentRow, primes);
+    rowShow(currentRow, frame);
   }
 
   iteration += 1;
 }
 
+void updateFrameState(long now) {
+  long elapsed = now - frameStart;
 
-void updateState(long now) {
-  long elapsed = now - start;
-  int segment = elapsed / (microsecondsPerFrame / nRows);
+  if (elapsed > microsecondsPerFrame) {
+    frameStart = micros();
+    frameNumber += 1;
+    updateFrame();
+  }
+}
 
-  if (segment > 3) {
+void updateRowState(long now) {
+  long elapsed = now - rowStart;
+  int segment = elapsed / (microsecondsPerRefresh / nRows);
+
+  if (segment > nRows - 1) {
     currentRow = 0;
 
     if (performanceProfiling) {
@@ -76,10 +92,18 @@ void updateState(long now) {
     }
 
     busyMicros = 0;
-    start = micros();
+    rowStart = micros();
   } else {
     currentRow = segment;
   }
+}
+
+void updateFrame() {
+  memset(frame, 0, sizeof(frame));
+
+  int position = frameNumber % sizeof(frame);
+  Serial.println(position);
+  frame[position] = true;  
 }
 
 void rowShow(int rowNumber, bool pattern[]) {
