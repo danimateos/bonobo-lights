@@ -15,7 +15,7 @@ int rows[nRows] = { r0, r1, r2, r3 };
 int cols[nCols] = { c0, c1, c2, c3 };
 int all_pins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
 
-const unsigned int frameRate = 60;
+const unsigned int frameRate = 12;
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
@@ -27,8 +27,8 @@ bool frame[nRows * nCols] = { false };
 long iteration = 0;
 long rowStart, now, frameStart;
 
-// State machine. A frame is a superstate of which each row
-// represents one of 4 distinct substates, but I'm managing them independently
+// State machine. A frame is a superstate of which each row represents
+// one of 4 distinct substates, but I'm managing them independently
 long frameNumber = 0;
 byte prevRow = 0;
 byte currentRow = 0;
@@ -100,8 +100,29 @@ void updateRowState(long now) {
   }
 }
 
-// Changes the frame in-place
+// Changes the frame in-place. Determines the animation.
+// Choose between fallingPrimes, staticPrimes, cylonEyes.
 void updateFrame() {
+  fallingPrimes();
+}
+
+void fallingPrimes() {
+  memset(frame, 0, sizeof(frame));
+
+  int offset = frameNumber % sizeof(frame);
+
+  for (int i = 0; i < sizeof(frame); i++) {
+    frame[i] = primes[(i - offset) % sizeof(frame)];
+  }
+}
+
+void staticPrimes() {
+  for (int i = 0; i < sizeof(primes); i++) {
+    frame[i] = primes[i];
+  }
+}
+
+void cylonEyes() {
   memset(frame, 0, sizeof(frame));
 
   int position = frameNumber % (2 * sizeof(frame));  // 0 to 31 if sizeofFrame is 16
@@ -145,7 +166,7 @@ void allOn() {
 //  From https://forum.arduino.cc/t/what-is-the-fastest-way-to-read-write-gpios-on-samd21-boards/907133/9
 static inline void fastWrite(int bitnum, int val) {
   if (val)
-    PORT_IOBUS->Group[0].OUTSET.reg = (1<<bitnum);
+    PORT_IOBUS->Group[0].OUTSET.reg = (1 << bitnum);
   else
-    PORT_IOBUS->Group[0].OUTCLR.reg = (1<<bitnum);
+    PORT_IOBUS->Group[0].OUTCLR.reg = (1 << bitnum);
 }
