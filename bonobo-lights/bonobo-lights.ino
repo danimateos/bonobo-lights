@@ -101,9 +101,13 @@ void updateRowState(long now) {
 void updateFrame() {
   memset(frame, 0, sizeof(frame));
 
-  int position = frameNumber % sizeof(frame);
-  Serial.println(position);
-  frame[position] = true;  
+  int position = frameNumber % (2 * sizeof(frame));  // 0 to 31 if sizeofFrame is 16
+  if (position >= sizeof(frame)) {
+    int fromEnd = sizeof(frame) - position;
+    position = sizeof(frame) + fromEnd;
+  }
+
+  frame[position] = true;
 }
 
 void rowShow(int rowNumber, bool pattern[]) {
