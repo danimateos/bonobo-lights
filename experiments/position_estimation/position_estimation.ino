@@ -14,7 +14,7 @@ const int INDICATOR_PIN = 48;           // Integrated LED
 
 // Settings
 const int INTERFACE_UPDATE = 100000;  // microseconds
-
+const float target = 0.1;             // target position to light up, in fraction of a rev
 
 // State machine
 long start, now, step;
@@ -49,6 +49,11 @@ void loop() {
 }
 
 void lightUp() {
+  if (abs(currentPosition() - target) < 0.01) {
+    digitalWrite(INDICATOR_PIN, HIGH);
+  } else {
+    digitalWrite(INDICATOR_PIN, LOW);
+  }
 }
 
 
