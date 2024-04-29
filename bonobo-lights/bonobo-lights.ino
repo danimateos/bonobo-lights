@@ -18,17 +18,35 @@ int allOutputPins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
 
 const int HALL_SENSOR_PIN_DIGITAL = 10;  // board_02
 
-const int SERIAL_UPDATE = 100000;  // microseconds
-const unsigned int frameRate = 12;
+// Settings
+const int SERIAL_UPDATE = 100000;   // print every SERIAL_UPDATE microseconds
+const unsigned int frameRate = 12;  // For video
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
 bool frame[nRows * nCols] = { false };
+bool hey[19][16] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
+                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
-long step = 0;
-long rowStart, now, frameStart, revolutionStart;
 
 // For position estimation with exponential smoothing. In microseconds.
 // Initialize durations to very high values (10^8us) so that there's
@@ -48,11 +66,12 @@ byte currentRow = 0;
 bool pressed = false;
 bool previouslyPressed = false;
 long lastSerialPrint;
-
+long step = 0;
+long rowStart, now, frameStart, revolutionStart;
 
 // For performance profiling
 long busyMicros = 0;
-bool performanceProfiling = true;
+bool performanceProfiling = false;
 bool debug = false;
 
 void setup() {
@@ -74,15 +93,17 @@ void setup() {
 void loop() {
   now = micros();
 
+  updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
+
   prevRow = currentRow;
-  updateRowState(now);
-  updateFrameState(now);
+  updateRowState(now);    // updates currentRow for muxing
+  updateFrameState(now);  // calls updateFrame() on a fixed schedule.
 
   if (currentRow != prevRow) {
-    rowShow(currentRow, frame);
+    rowShow(currentRow, frame);  // switch on and off the appropriate LEDs
   }
 
-  updateSensor();
+  printSerial();  // On a fixed schedule
 
   step += 1;
 }
