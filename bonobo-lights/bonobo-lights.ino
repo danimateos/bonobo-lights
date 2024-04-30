@@ -19,46 +19,46 @@ int allOutputPins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
 const int HALL_SENSOR_PIN_DIGITAL = 10;  // board_02
 
 // Settings
-const int SERIAL_UPDATE = 100000;   // print every SERIAL_UPDATE microseconds
-const unsigned int frameRate = 12;  // For video
+const int SERIAL_UPDATE = 100000;  // print every SERIAL_UPDATE microseconds
+const int frameRate = 12;          // For video
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 const unsigned int refreshRate = 5000;
-unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
+unsigned long microsecondsPerRefresh = 1000000 / refreshRate;
+const float angularResolution = 1.0 / 120;  // Angular width in fractions of a revolution of a pixel column
 
+
+// Holding the patterns as arrays of ints
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-bool frame[nRows * nCols] = { false };
-bool hey[19][16] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
+bool blank[nRows * nCols] = { false };
+bool *frame = primes;
+const int sizeOfHey = 19;
+bool hey[sizeOfHey][nRows * nCols] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
 
-// For position estimation with exponential smoothing. In microseconds.
-// Initialize durations to very high values (10^8us) so that there's
-// no graphical updates until after 5 revolutions.
-const int nRevolutionsToConsider = 5;
-const int weights[nRevolutionsToConsider] = { 315, 625, 1250, 2500, 5000 };  // most recent weighs heavier
-const int sumOfWeights = 9690;
-long revolutionDurations[nRevolutionsToConsider] = { 100000000, 100000000, 100000000, 100000000, 100000000 };
-long currentDurationOfRevolution = 100000000;
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
+long currentDurationOfRevolution = 100000000;
+int pixel = 0;
+float offset = .1;
 long frameNumber = 0;
 long revolution = 0;
 byte prevRow = 0;
@@ -83,8 +83,10 @@ void setup() {
   }
   // PORT_IOBUS->Group[0].OUTSET.reg = pinsOut; // not working yet
 
+  pinMode(HALL_SENSOR_PIN_DIGITAL, INPUT);
+
   Serial.begin(115200);
-  delay(100);
+  delay(500);
   Serial.println("Let us play");
   rowStart = micros();
   frameStart = rowStart;
@@ -97,8 +99,7 @@ void loop() {
 
   prevRow = currentRow;
   updateRowState(now);    // updates currentRow for muxing
-  updateFrameState(now);  // calls updateFrame() on a fixed schedule.
-
+  updatePixelState(now);  // calls updateFrame() on a fixed schedule
   if (currentRow != prevRow) {
     rowShow(currentRow, frame);  // switch on and off the appropriate LEDs
   }
@@ -112,7 +113,6 @@ void updateSensor() {
   previouslyPressed = pressed;
 
   pressed = !digitalRead(HALL_SENSOR_PIN_DIGITAL);  // Sensor is pulled up
-
   if (pressed && !previouslyPressed) {
     updateSpeedEstimation();
     revolution += 1;
@@ -126,42 +126,23 @@ void updateSpeedEstimation() {
   revolutionStart = micros();
 }
 
-// Exponential smoothing for smoother estimation
-// To be debugged
-void exponentialSmoothing() {
-  long now = micros();
-  int offset = revolution % nRevolutionsToConsider;  // circular buffer
-  revolutionDurations[offset] = now - revolutionStart;
-  revolutionStart = now;
-
-  long tempEstimation = 0;
-
-  for (int i = 0; i < nRevolutionsToConsider; i++) {
-
-    int whichWeight = (i + ((nRevolutionsToConsider - 1) - offset)) % nRevolutionsToConsider;  // Black magic. Notes on Remarkable
-
-    tempEstimation += weights[whichWeight] * revolutionDurations[i];
-  }
-
-  currentDurationOfRevolution = tempEstimation / sumOfWeights;
-}
-
-
 // Fractions of a revolution
 float currentPosition() {
   double elapsed = micros() - revolutionStart;
   return elapsed / currentDurationOfRevolution;
 }
 
-// Keeps track of which frame should be visible now, for movement
-void updateFrameState(long now) {
-  long elapsed = now - frameStart;
+// Keeps track of which pixel number are we on
+void updatePixelState(long now) {
+  pixel = (currentPosition() - offset) / angularResolution;
 
-  if (elapsed >= microsecondsPerFrame) {
-    updateFrame();
-    frameStart = micros();
-    frameNumber += 1;
+  if (pixel < sizeOfHey) {
+    frame = hey[pixel];
+  } else {
+    frame = blank;
   }
+
+  Serial.println(pixel);
 }
 
 // Keeps track of which row should be active now, for muxing
@@ -186,39 +167,6 @@ void updateRowState(long now) {
   }
 }
 
-// Changes the frame in-place. Determines the animation.
-// Choose between fallingPrimes, staticPrimes, cylonEyes.
-void updateFrame() {
-  fallingPrimes();
-}
-
-void fallingPrimes() {
-  memset(frame, 0, sizeof(frame));
-
-  int offset = frameNumber % sizeof(frame);
-
-  for (int i = 0; i < sizeof(frame); i++) {
-    frame[i] = primes[(i - offset) % sizeof(frame)];
-  }
-}
-
-void staticPrimes() {
-  for (int i = 0; i < sizeof(primes); i++) {
-    frame[i] = primes[i];
-  }
-}
-
-void cylonEyes() {
-  memset(frame, 0, sizeof(frame));
-
-  int position = frameNumber % (2 * sizeof(frame));  // 0 to 31 if sizeofFrame is 16
-  if (position >= sizeof(frame)) {
-    int fromEnd = sizeof(frame) - position;
-    position = sizeof(frame) + fromEnd;
-  }
-
-  frame[position] = true;
-}
 
 void rowShow(int rowNumber, bool pattern[]) {
   long thisStart = micros();
