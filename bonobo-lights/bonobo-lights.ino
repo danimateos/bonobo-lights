@@ -48,14 +48,7 @@ bool hey[19][16] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
                      { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
 
-// For position estimation with exponential smoothing. In microseconds.
-// Initialize durations to very high values (10^8us) so that there's
-// no graphical updates until after 5 revolutions.
-const int nRevolutionsToConsider = 5;
-const int weights[nRevolutionsToConsider] = { 315, 625, 1250, 2500, 5000 };  // most recent weighs heavier
-const int sumOfWeights = 9690;
-long revolutionDurations[nRevolutionsToConsider] = { 100000000, 100000000, 100000000, 100000000, 100000000 };
-long currentDurationOfRevolution = 100000000;
+
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -68,6 +61,7 @@ bool previouslyPressed = false;
 long lastSerialPrint;
 long step = 0;
 long rowStart, now, frameStart, revolutionStart;
+long currentDurationOfRevolution = 100000000;
 
 // For performance profiling
 long busyMicros = 0;
@@ -125,27 +119,6 @@ void updateSpeedEstimation() {
   currentDurationOfRevolution = now - revolutionStart;
   revolutionStart = micros();
 }
-
-// Exponential smoothing for smoother estimation
-// To be debugged
-void exponentialSmoothing() {
-  long now = micros();
-  int offset = revolution % nRevolutionsToConsider;  // circular buffer
-  revolutionDurations[offset] = now - revolutionStart;
-  revolutionStart = now;
-
-  long tempEstimation = 0;
-
-  for (int i = 0; i < nRevolutionsToConsider; i++) {
-
-    int whichWeight = (i + ((nRevolutionsToConsider - 1) - offset)) % nRevolutionsToConsider;  // Black magic. Notes on Remarkable
-
-    tempEstimation += weights[whichWeight] * revolutionDurations[i];
-  }
-
-  currentDurationOfRevolution = tempEstimation / sumOfWeights;
-}
-
 
 // Fractions of a revolution
 float currentPosition() {
