@@ -26,7 +26,7 @@ const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-bool frame[nRows * nCols] = { false };
+bool frame[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
 bool hey[19][16] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
                      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
                      { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -128,13 +128,7 @@ float currentPosition() {
 
 // Keeps track of which frame should be visible now, for movement
 void updateFrameState(long now) {
-  long elapsed = now - frameStart;
-
-  if (elapsed >= microsecondsPerFrame) {
-    updateFrame();
-    frameStart = micros();
-    frameNumber += 1;
-  }
+  return;
 }
 
 // Keeps track of which row should be active now, for muxing
@@ -157,40 +151,6 @@ void updateRowState(long now) {
   } else {
     currentRow = segment;
   }
-}
-
-// Changes the frame in-place. Determines the animation.
-// Choose between fallingPrimes, staticPrimes, cylonEyes.
-void updateFrame() {
-  fallingPrimes();
-}
-
-void fallingPrimes() {
-  memset(frame, 0, sizeof(frame));
-
-  int offset = frameNumber % sizeof(frame);
-
-  for (int i = 0; i < sizeof(frame); i++) {
-    frame[i] = primes[(i - offset) % sizeof(frame)];
-  }
-}
-
-void staticPrimes() {
-  for (int i = 0; i < sizeof(primes); i++) {
-    frame[i] = primes[i];
-  }
-}
-
-void cylonEyes() {
-  memset(frame, 0, sizeof(frame));
-
-  int position = frameNumber % (2 * sizeof(frame));  // 0 to 31 if sizeofFrame is 16
-  if (position >= sizeof(frame)) {
-    int fromEnd = sizeof(frame) - position;
-    position = sizeof(frame) + fromEnd;
-  }
-
-  frame[position] = true;
 }
 
 void rowShow(int rowNumber, bool pattern[]) {
