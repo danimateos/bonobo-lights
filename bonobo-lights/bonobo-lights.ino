@@ -4,7 +4,7 @@
 #define NUMPIXELS 16  // Number of LEDs in strip
 #define STRIP_DATA 15
 #define STRIP_CLOCK 14
-Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_GRB);
+Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_BGR);
 
 // Status indicator LED
 #define LED_R 0
@@ -60,13 +60,30 @@ bool detected = false;
 bool previouslyDetected = false;
 long lastSerialPrint;
 long step = 0;
-long now, frameStart, revolutionStart;
+long now, sliceOnMicros, revolutionStart;
 long currentDurationOfRevolution = 100000000;
 int polarIndex = 0;
 float offset = .1;
 float angularResolution = 1.0 / 120;
 
 bool debug = false;
+
+void updateSlice(bool newSlice[NUMPIXELS]) {
+
+  if (debug) {
+    Serial.print("{");
+  }
+
+  for (int i = 0; i < NUMPIXELS; i++) {
+    slice[i] = newSlice[i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
+    if (debug) {
+      Serial.print(slice[i]);
+      Serial.print(", ");
+    }
+  }
+
+  if (debug) { Serial.println("}"); }
+}
 
 void setup() {
 
@@ -78,7 +95,9 @@ void setup() {
 
   pinMode(HALL, INPUT);
 
-
+  strip.begin();       // Initialize pins for output
+  strip.updatePins();  // Switch over to hardware SPI
+  strip.show();        // Turn all LEDs off ASAP
 
   digitalWrite(LED_R, HIGH);
   digitalWrite(LED_G, HIGH);
@@ -87,7 +106,9 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   Serial.println("Let us play");
-  frameStart = micros();
+  sliceOnMicros = micros();
+
+  updateSlice(primes);
 }
 
 void loop() {
@@ -96,6 +117,8 @@ void loop() {
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
   updatePolarIndex(now);  // calculates which pixel column and updates the frame
+
+  showSlice(0xFFAA00);
 
   step += 1;
 }
@@ -135,22 +158,7 @@ float currentPosition() {
   return elapsed / currentDurationOfRevolution;
 }
 
-void updateSlice(bool newSlice[NUMPIXELS]) {
 
-  if (debug) {
-    Serial.print("{");
-  }
-
-  for (int i = 0; i < NUMPIXELS; i++) {
-    slice[i] = newSlice[i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
-    if (debug) {
-      Serial.print(slice[i]);
-      Serial.print(", ");
-    }
-  }
-
-  if (debug) { Serial.println("}"); }
-}
 
 
 // Keeps track of which pixel number are we on and updates the frame if needed
@@ -160,14 +168,19 @@ void updatePolarIndex(long now) {
 
   if (polarIndex != previousPolarIndex && polarIndex >= 0 && polarIndex < sizeOfPattern) {
     updateSlice(pattern[polarIndex]);
-  } else {
-    updateSlice(blank);
   }
 }
 
+void showSlice(uint32_t color) {
 
-
-void showSlice() {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    if (slice[i]) {
+      strip.setPixelColor(i, color);
+    } else {
+      strip.setPixelColor(i, 0);
+    }
+  }
+  strip.show();
 }
 
 void allOff() {
