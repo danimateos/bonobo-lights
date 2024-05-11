@@ -2,9 +2,9 @@
 #include <SPI.h>
 
 #define NUMPIXELS 16  // Number of LEDs in strip
-#define DATAPIN 15
-#define CLOCKPIN 14
-Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_GRB);
+#define STRIP_DATA 15
+#define STRIP_CLOCK 14
+Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_GRB);
 
 // Status indicator LED
 #define LED_R 0
@@ -18,55 +18,39 @@ Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_GRB);
 // Sensor
 #define HALL 7
 
-const int r0 = 0;
-const int r1 = 1;
-const int r2 = 2;
-const int r3 = 3;
+const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
 
-const int c0 = 4;
-const int c1 = 5;
-const int c2 = 6;
-const int c3 = 7;
-
-const int nRows = 4;
-const int nCols = 4;
-
-int rows[nRows] = { r0, r1, r2, r3 };
-int cols[nCols] = { c0, c1, c2, c3 };
-int allOutputPins[nRows + nCols] = { r0, r1, r2, r3, c0, c1, c2, c3 };
-
-const int HALL_SENSOR_PIN_DIGITAL = 10;  // board_02
-
-// Settings
-const int SERIAL_UPDATE = 100000;   // print every SERIAL_UPDATE microseconds
+// UI Settings
+#define SERIAL_UPDATE 100000        // print every SERIAL_UPDATE microseconds
 const unsigned int frameRate = 12;  // For video
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
+#define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
 
-bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-//bool frame[nRows * nCols] = { false } bool blank[nRows * nCols] = { false };
-bool frame[nRows * nCols] = { false };
+// Framebuffer
+bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
+bool frame[NUMPIXELS] = { false };
 const int sizeOfHey = 19;
-bool hey[sizeOfHey][nRows * nCols] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
+bool hey[sizeOfHey][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                   { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                   { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                   { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                   { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                   { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -74,8 +58,8 @@ long frameNumber = 0;
 long revolution = 0;
 byte prevRow = 0;
 byte currentRow = 0;
-bool pressed = false;
-bool previouslyPressed = false;
+bool detected = false;
+bool previouslyDetected = false;
 long lastSerialPrint;
 long step = 0;
 long rowStart, now, frameStart, revolutionStart;
@@ -84,10 +68,6 @@ int pixel = 0;
 float offset = .1;
 float angularResolution = 1.0 / 120;
 
-
-// For performance profiling
-long busyMicros = 0;
-bool performanceProfiling = false;
 bool debug = false;
 
 void setup() {
@@ -98,7 +78,14 @@ void setup() {
     pinMode(allOutputPins[i], OUTPUT);
   }
   // PORT_IOBUS->Group[0].OUTSET.reg = pinsOut; // not working yet
-  pinMode(HALL_SENSOR_PIN_DIGITAL, INPUT);
+
+  pinMode(HALL, INPUT);
+
+
+
+  digitalWrite(LED_R, HIGH);
+  digitalWrite(LED_G, HIGH);
+  digitalWrite(LED_B, HIGH);
 
   Serial.begin(115200);
   delay(100);
@@ -113,24 +100,28 @@ void loop() {
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
   prevRow = currentRow;
-  updateRowState(now);    // updates currentRow for muxing
   updatePixelState(now);  // calculates which pixel column and updates the frame
-
-  if (currentRow != prevRow) {
-    rowShow(currentRow, frame);  // switch on and off the appropriate LEDs
-  }
-
-  printSerial();  // On a fixed schedule
 
   step += 1;
 }
 
 void updateSensor() {
-  previouslyPressed = pressed;
+  // Using an analog Hall effect sensor
+  previouslyDetected = detected;
 
-  pressed = !digitalRead(HALL_SENSOR_PIN_DIGITAL);  // Sensor is pulled up
+  int difference = (int)analogRead(HALL) - 520;  // neutral point
+  detected = abs(difference) > HALL_MARGIN;
 
-  if (pressed && !previouslyPressed) {
+  if (debug) {
+    Serial.print("analog:");
+    Serial.print(analogRead(HALL));
+    Serial.print(" diff:");
+    Serial.print(difference);
+    Serial.print(" detected:");
+    Serial.println(detected);
+  }
+
+  if (detected && !previouslyDetected) {
     updateSpeedEstimation();
     revolution += 1;
   }
@@ -155,57 +146,24 @@ void updatePixelState(long now) {
   pixel = (currentPosition() - offset) / angularResolution;
 
   if (pixel != previousPixel && pixel >= 0 && pixel < sizeOfHey) {
-    Serial.print(pixel);
+    if (debug) {
+      Serial.print(pixel);
+      Serial.print(": {");
+    }
 
-    Serial.print(": {");
-    for (int i = 0; i < nRows * nCols; i++) {
+
+    for (int i = 0; i < NUMPIXELS; i++) {
       frame[i] = hey[pixel][i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
-      Serial.print(frame[i]);
-      Serial.print(", ");
-    }
-    Serial.println("}");
-  }
-
-  
-}
-
-// Keeps track of which row should be active now, for muxing
-void updateRowState(long now) {
-  long elapsed = now - rowStart;
-  int segment = elapsed / (microsecondsPerRefresh / nRows);
-
-  if (segment > nRows - 1) {
-    currentRow = 0;
-
-    if (performanceProfiling) {
-      Serial.print(" busyMicros: ");
-      Serial.print(busyMicros);
-      Serial.print(" elapsed:");
-      Serial.println(elapsed);
+      if (debug) {
+        Serial.print(frame[i]);
+        Serial.print(", ");
+      }
     }
 
-    busyMicros = 0;
-    rowStart = micros();
-  } else {
-    currentRow = segment;
+    if (debug) { Serial.println("}"); }
   }
 }
 
-void rowShow(int rowNumber, bool pattern[]) {
-  long thisStart = micros();
-
-  allOff();
-  fastWrite(rows[rowNumber], HIGH);
-
-  for (int i = 0; i < nCols; i++) {
-    int position = rowNumber * nRows + i;
-    if (pattern[position]) {
-      fastWrite(cols[i], HIGH);
-    }
-  }
-
-  busyMicros += micros() - thisStart;
-}
 
 
 void allOff() {
