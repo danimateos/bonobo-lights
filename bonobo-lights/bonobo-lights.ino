@@ -31,8 +31,8 @@ unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 // Framebuffer
 bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
 bool frame[NUMPIXELS] = { false };
-const int sizeOfHey = 19;
-bool hey[sizeOfHey][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+const int sizeOfPattern = 19;
+bool pattern[sizeOfPattern][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
                                    { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
                                    { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
                                    { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -54,17 +54,14 @@ bool hey[sizeOfHey][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
-long frameNumber = 0;
 long revolution = 0;
-byte prevRow = 0;
-byte currentRow = 0;
 bool detected = false;
 bool previouslyDetected = false;
 long lastSerialPrint;
 long step = 0;
-long rowStart, now, frameStart, revolutionStart;
+long now, frameStart, revolutionStart;
 long currentDurationOfRevolution = 100000000;
-int pixel = 0;
+int polarIndex = 0;
 float offset = .1;
 float angularResolution = 1.0 / 120;
 
@@ -72,7 +69,6 @@ bool debug = false;
 
 void setup() {
 
-  // long pinsOut = 0;
   for (int i = 0; i < 8; i++) {
     // pinsOut |= (1 << allOutputPins[i]);
     pinMode(allOutputPins[i], OUTPUT);
@@ -90,8 +86,7 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   Serial.println("Let us play");
-  rowStart = micros();
-  frameStart = rowStart;
+  frameStart = micros();
 }
 
 void loop() {
@@ -99,8 +94,7 @@ void loop() {
 
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
-  prevRow = currentRow;
-  updatePixelState(now);  // calculates which pixel column and updates the frame
+  updatePolarIndex(now);  // calculates which pixel column and updates the frame
 
   step += 1;
 }
@@ -141,19 +135,18 @@ float currentPosition() {
 }
 
 // Keeps track of which pixel number are we on and updates the frame if needed
-void updatePixelState(long now) {
-  int previousPixel = pixel;
-  pixel = (currentPosition() - offset) / angularResolution;
+void updatePolarIndex(long now) {
+  int previousPolarIndex = polarIndex;
+  polarIndex = (currentPosition() - offset) / angularResolution;
 
-  if (pixel != previousPixel && pixel >= 0 && pixel < sizeOfHey) {
+  if (polarIndex != previousPolarIndex && polarIndex >= 0 && polarIndex < sizeOfPattern) {
     if (debug) {
-      Serial.print(pixel);
+      Serial.print(polarIndex);
       Serial.print(": {");
     }
 
-
     for (int i = 0; i < NUMPIXELS; i++) {
-      frame[i] = hey[pixel][i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
+      frame[i] = pattern[polarIndex][i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
       if (debug) {
         Serial.print(frame[i]);
         Serial.print(", ");
