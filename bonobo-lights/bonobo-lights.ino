@@ -1,6 +1,9 @@
 #include <Adafruit_DotStar.h>
 #include <SPI.h>
 
+#include "config.h"
+#include "functions.h"
+
 #define NUMPIXELS 16  // Number of LEDs in strip
 #define STRIP_DATA 15
 #define STRIP_CLOCK 14
