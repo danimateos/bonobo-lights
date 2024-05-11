@@ -1,3 +1,22 @@
+#include <Adafruit_DotStar.h>
+#include <SPI.h>
+
+#define NUMPIXELS 16  // Number of LEDs in strip
+#define DATAPIN 15
+#define CLOCKPIN 14
+Adafruit_DotStar strip(NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_GRB);
+
+// Status indicator LED
+#define LED_R 0
+#define LED_G 1
+#define LED_B 2
+
+// Human input
+#define BUTTON_1 3
+#define BUTTON_2 6
+
+// Sensor
+#define HALL 7
 
 const int r0 = 0;
 const int r1 = 1;
@@ -26,29 +45,28 @@ const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
 bool primes[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-bool frame[nRows * nCols] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-bool hey[19][16] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
-                     { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                     { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
-
-
-
+//bool frame[nRows * nCols] = { false } bool blank[nRows * nCols] = { false };
+bool frame[nRows * nCols] = { false };
+const int sizeOfHey = 19;
+bool hey[sizeOfHey][nRows * nCols] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                                       { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -62,6 +80,10 @@ long lastSerialPrint;
 long step = 0;
 long rowStart, now, frameStart, revolutionStart;
 long currentDurationOfRevolution = 100000000;
+int pixel = 0;
+float offset = .1;
+float angularResolution = 1.0 / 120;
+
 
 // For performance profiling
 long busyMicros = 0;
@@ -76,6 +98,7 @@ void setup() {
     pinMode(allOutputPins[i], OUTPUT);
   }
   // PORT_IOBUS->Group[0].OUTSET.reg = pinsOut; // not working yet
+  pinMode(HALL_SENSOR_PIN_DIGITAL, INPUT);
 
   Serial.begin(115200);
   delay(100);
@@ -91,7 +114,7 @@ void loop() {
 
   prevRow = currentRow;
   updateRowState(now);    // updates currentRow for muxing
-  updateFrameState(now);  // calls updateFrame() on a fixed schedule.
+  updatePixelState(now);  // calculates which pixel column and updates the frame
 
   if (currentRow != prevRow) {
     rowShow(currentRow, frame);  // switch on and off the appropriate LEDs
@@ -126,9 +149,24 @@ float currentPosition() {
   return elapsed / currentDurationOfRevolution;
 }
 
-// Keeps track of which frame should be visible now, for movement
-void updateFrameState(long now) {
-  return;
+// Keeps track of which pixel number are we on and updates the frame if needed
+void updatePixelState(long now) {
+  int previousPixel = pixel;
+  pixel = (currentPosition() - offset) / angularResolution;
+
+  if (pixel != previousPixel && pixel >= 0 && pixel < sizeOfHey) {
+    Serial.print(pixel);
+
+    Serial.print(": {");
+    for (int i = 0; i < nRows * nCols; i++) {
+      frame[i] = hey[pixel][i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
+      Serial.print(frame[i]);
+      Serial.print(", ");
+    }
+    Serial.println("}");
+  }
+
+  
 }
 
 // Keeps track of which row should be active now, for muxing
