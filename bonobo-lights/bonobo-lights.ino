@@ -4,32 +4,11 @@
 #include "config.h"
 #include "functions.h"
 
-#define NUMPIXELS 16  // Number of LEDs in strip
-#define STRIP_DATA 15
-#define STRIP_CLOCK 14
 Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_BGR);
 
-// Status indicator LED
-#define LED_R 0
-#define LED_G 1
-#define LED_B 2
 
-// Human input
-#define BUTTON_1 3
-#define BUTTON_2 6
-
-// Sensor
-#define HALL 7
-
-const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
-
-// UI Settings
-#define SERIAL_UPDATE 100000        // print every SERIAL_UPDATE microseconds
-const unsigned int frameRate = 12;  // For video
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
-const unsigned int refreshRate = 5000;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
-#define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
 
 // Framebuffer
 bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };

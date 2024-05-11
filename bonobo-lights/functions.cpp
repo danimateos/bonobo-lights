@@ -6,4 +6,4 @@ void someFunction() {
     Serial.println(globalVariable);
 }
 
-int globalVariable = 42;  // Initialize global variable
+const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
