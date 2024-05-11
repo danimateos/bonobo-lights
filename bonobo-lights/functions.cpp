@@ -1,11 +1,6 @@
 #include "functions.h"
 #include "config.h"
 
-void someFunction() {
-    // Function implementation
-    Serial.println(globalVariable);
-}
-
 //  From https://forum.arduino.cc/t/what-is-the-fastest-way-to-read-write-gpios-on-samd21-boards/907133/9
 static inline void fastWrite(int bitnum, int val) {
   if (val)
@@ -42,6 +37,81 @@ void updateSlice(bool newSlice[NUMPIXELS]) {
 
   if (debug) { Serial.println("}"); }
 }
+
+
+void updateSensor() {
+  // Using an analog Hall effect sensor
+  previouslyDetected = detected;
+
+  int difference = (int)analogRead(HALL) - 520;  // neutral point
+  detected = abs(difference) > HALL_MARGIN;
+
+  if (debug) {
+    Serial.print("analog:");
+    Serial.print(analogRead(HALL));
+    Serial.print(" diff:");
+    Serial.print(difference);
+    Serial.print(" detected:");
+    Serial.println(detected);
+  }
+
+  if (detected && !previouslyDetected) {
+    updateSpeedEstimation();
+    revolution += 1;
+  }
+}
+
+// For now, just use the last turn. Later we can go to the exponential smoothing version
+void updateSpeedEstimation() {
+  long now = micros();
+  currentDurationOfRevolution = now - revolutionStart;
+  revolutionStart = micros();
+}
+
+// Fractions of a revolution
+float currentPosition() {
+  double elapsed = micros() - revolutionStart;
+  return elapsed / currentDurationOfRevolution;
+}
+
+
+
+
+// Keeps track of which pixel number are we on and updates the frame if needed
+void updatePolarIndex(long now) {
+  int previousPolarIndex = polarIndex;
+  polarIndex = (currentPosition() - offset) / angularResolution;
+
+  if (polarIndex != previousPolarIndex && polarIndex >= 0 && polarIndex < sizeOfPattern) {
+    updateSlice(pattern[polarIndex]);
+  }
+}
+
+void showSlice(uint32_t color) {
+
+  for (int i = 0; i < NUMPIXELS; i++) {
+    if (slice[i]) {
+      strip.setPixelColor(i, color);
+    } else {
+      strip.setPixelColor(i, 0);
+    }
+  }
+  strip.show();
+}
+
+
+void printSerial() {
+  char buffer[150];
+  now = micros();
+
+  if (now - lastSerialPrint > SERIAL_UPDATE) {
+    sprintf(buffer, "revolution:%d revolutionStart:%d current_postion:%.3f currentDurationOfRevolution:%d\n", revolution, revolutionStart, currentPosition(), currentDurationOfRevolution);
+    Serial.println(buffer);
+    lastSerialPrint = now;
+  }
+}
+
+// Variables
 
 const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
 
@@ -87,3 +157,5 @@ bool pattern[sizeOfPattern][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
                                            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
                                            { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
+
+Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_BGR);

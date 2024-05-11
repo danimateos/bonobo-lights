@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <Arduino.h>
+#include <Adafruit_DotStar.h>
 
 #define NUMPIXELS 16  // Number of LEDs in strip
 #define STRIP_DATA 15
@@ -26,7 +27,6 @@
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
 #define sizeOfPattern 19
 
-extern int globalVariable;
 extern const int allOutputPins[];
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -51,5 +51,6 @@ extern bool primes[NUMPIXELS];
 extern bool blank[NUMPIXELS];
 extern bool slice[NUMPIXELS];
 extern bool pattern[sizeOfPattern][NUMPIXELS];
+extern Adafruit_DotStar strip;
 
 #endif
