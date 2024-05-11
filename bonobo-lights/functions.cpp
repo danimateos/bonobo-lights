@@ -82,8 +82,12 @@ void updatePolarIndex(long now) {
   int previousPolarIndex = polarIndex;
   polarIndex = (currentPosition() - offset) / angularResolution;
 
-  if (polarIndex != previousPolarIndex && polarIndex >= 0 && polarIndex < sizeOfPattern) {
-    updateSlice(pattern[polarIndex]);
+  if (polarIndex != previousPolarIndex) {
+    if (polarIndex >= 0 && polarIndex < sizeOfPattern) {
+      updateSlice(pattern[polarIndex]);
+    } else {
+      updateSlice(blank);
+    }
   }
 }
 

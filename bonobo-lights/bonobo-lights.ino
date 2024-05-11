@@ -5,9 +5,6 @@
 #include "functions.h"
 
 
-
-
-
 void setup() {
 
   for (int i = 0; i < 8; i++) {
@@ -19,7 +16,7 @@ void setup() {
   pinMode(HALL, INPUT);
 
   strip.begin();       // Initialize pins for output
-  strip.updatePins();  // Switch over to hardware SPI
+  // strip.updatePins();  // Switch over to hardware SPI
   strip.show();        // Turn all LEDs off ASAP
 
   digitalWrite(LED_R, HIGH);
@@ -41,7 +38,7 @@ void loop() {
 
   updatePolarIndex(now);  // calculates which pixel column and updates the frame
 
-  showSlice(0xFFAA00);
+  showSlice(0xFF4400);
 
   step += 1;
 }
