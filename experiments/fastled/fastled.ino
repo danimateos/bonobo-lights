@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Adafruit_DotStar.h>
+#include <FastLED.h>
 
 #define NUMPIXELS 16  // Number of LEDs in strip
 #define STRIP_DATA 15
@@ -17,7 +17,7 @@
 // Sensor
 #define HALL 7
 
-Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_BGR);
+CRGB leds[NUMPIXELS];
 
 const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
 
@@ -28,9 +28,10 @@ void setup() {
 
   pinMode(HALL, INPUT);
 
-  strip.begin();  // Initialize pins for output
-  // strip.updatePins();  // Switch over to hardware SPI
-  strip.show();  // Turn all LEDs off ASAP
+  // FastLED.addLeds<DOTSTAR, STRIP_DATA, STRIP_CLOCK, RGB>(leds, NUMPIXELS);
+  FastLED.addLeds<DOTSTAR, STRIP_DATA, STRIP_CLOCK, RGB, DATA_RATE_MHZ(12)>(leds, NUMPIXELS);
+  
+  FastLED.setBrightness(50);
 
   digitalWrite(LED_R, HIGH);
   digitalWrite(LED_G, HIGH);
@@ -40,11 +41,12 @@ void setup() {
 }
 
 void loop() {
-  strip.setPixelColor(15, 0x6600FF);
-  strip.show();
+  leds[15] = CRGB::Red;
+  FastLED.show();
+  Serial.println("ON");
   delay(500);
-  strip.setPixelColor(15, 0x00FF22);
-  strip.show();
+  leds[15] = CRGB::Black;
+  FastLED.show();
+  Serial.println("OFF");
   delay(500);
-  
 }
