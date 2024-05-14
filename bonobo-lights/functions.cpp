@@ -95,12 +95,12 @@ void showSlice(uint32_t color) {
 
   for (int i = 0; i < NUMPIXELS; i++) {
     if (slice[i]) {
-      strip.setPixelColor(i, color);
+      leds[i] = color;
     } else {
-      strip.setPixelColor(i, 0);
+      leds[i] = CRGB::Black;
     }
   }
-  strip.show();
+  FastLED.show();
 }
 
 
@@ -162,4 +162,3 @@ bool pattern[sizeOfPattern][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
                                            { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
 
-Adafruit_DotStar strip(NUMPIXELS, STRIP_DATA, STRIP_CLOCK, DOTSTAR_BGR);
