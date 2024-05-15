@@ -1,5 +1,8 @@
-#include "functions.h"
+#include <sys/_stdint.h>
+#include <FastLED.h>
 #include "config.h"
+#include "functions.h"
+#include "patterns.h"
 
 //  From https://forum.arduino.cc/t/what-is-the-fastest-way-to-read-write-gpios-on-samd21-boards/907133/9
 static inline void fastWrite(int bitnum, int val) {
@@ -21,23 +24,29 @@ void allOn() {
   }
 }
 
-void updateSlice(bool newSlice[NUMPIXELS]) {
-
-  if (debug) {
-    Serial.print("{");
+void loadSlice(uint8_t newSlice[NUMPIXELS * 3]) {
+  for (int i = 0; i < NUMPIXELS * 3; i++) {
+    memcpy(slice, newSlice, NUMPIXELS * 3);  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
   }
-
-  for (int i = 0; i < NUMPIXELS; i++) {
-    slice[i] = newSlice[i];  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
-    if (debug) {
-      Serial.print(slice[i]);
-      Serial.print(", ");
-    }
-  }
-
-  if (debug) { Serial.println("}"); }
 }
 
+void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
+  uint8_t r = (color >> 16);
+  uint8_t g = (color >> 8) & 0xFF;
+  uint8_t b = color & 0xFF;
+
+  for (int i = 0; i < NUMPIXELS; i++) {
+    if (newSlice[i]) {
+      slice[i * 3] = r;
+      slice[i * 3 + 1] = g;
+      slice[i * 3 + 2] = b;  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.}
+    } else {
+      slice[i * 3] = 0;
+      slice[i * 3 + 1] = 0;
+      slice[i * 3 + 2] = 0;
+    }
+  }
+}
 
 void updateSensor() {
   // Using an analog Hall effect sensor
@@ -75,34 +84,41 @@ float currentPosition() {
 }
 
 
-
-
-// Keeps track of which pixel number are we on and updates the frame if needed
+// Keeps track of which pixel number are we on and loads the slice if needed
 void updatePolarIndex(long now) {
   int previousPolarIndex = polarIndex;
   polarIndex = (currentPosition() - offset) / angularResolution;
 
   if (polarIndex != previousPolarIndex) {
-    if (polarIndex >= 0 && polarIndex < sizeOfPattern) {
-      updateSlice(pattern[polarIndex]);
+    if (polarIndex >= 0 && polarIndex < angularPixels) {
+      loadSlice(&pattern[polarIndex * NUMPIXELS * 3]);
     } else {
-      updateSlice(blank);
+      loadSlice(blankSlice);
     }
   }
 }
 
-void showSlice(uint32_t color) {
-
+void showSlice() {
   for (int i = 0; i < NUMPIXELS; i++) {
-    if (slice[i]) {
-      leds[i] = color;
-    } else {
-      leds[i] = CRGB::Black;
-    }
+    leds[i] = CRGB(slice[3 * i], slice[3 * i + 1], slice[3 * i + 2]);
   }
   FastLED.show();
 }
 
+void loadPrimes(uint32_t color) {
+  // TODO use the primes bool array
+  for (int i = 0; i < NUMPIXELS; i++) {
+    if (primes[i]) {
+      slice[i] = color >> 16;     // R
+      slice[i + 1] = color >> 8;  // G
+      slice[i + 2] = color >> 0;  // B
+    } else {
+      slice[i] = 0;      // R
+      slice[i + 1] = 0;  // G
+      slice[i + 2] = 0;  // B
+    }
+  }
+}
 
 void printSerial() {
   char buffer[150];
@@ -130,7 +146,7 @@ long now, sliceOnMicros, revolutionStart;
 long currentDurationOfRevolution = 100000000;
 int polarIndex = 0;
 float offset = .1;
-float angularResolution = 1.0 / 120;
+float angularResolution = 1.0 / angularPixels;
 
 bool debug = false;
 
@@ -139,26 +155,11 @@ unsigned long microsecondsPerFrame = 1000000 / frameRate;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 
 // Framebuffer
-bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
-bool blank[NUMPIXELS] = { false };
-bool slice[NUMPIXELS] = { false };
-bool pattern[sizeOfPattern][NUMPIXELS] = { { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                           { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                           { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                           { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                           { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-                                           { 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1 } };
+// uint8_t slice[NUMPIXELS * 3] = { 0 };
 
+bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
+uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
+uint8_t slice[NUMPIXELS * 3] = { 0 };
+uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };
+// memcpy(pattern, dudemabaike, sizeof(dudemabaike));
+// uint8_t pattern[angularPixels * NUMPIXELS * 3] = memcpy(void *, const void *, size_t);

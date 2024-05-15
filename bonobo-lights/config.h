@@ -1,3 +1,4 @@
+#include <stdint.h>
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -25,7 +26,8 @@
 #define frameRate 12          // For video
 #define refreshRate 5000
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
-#define sizeOfPattern 19
+#define angularPixels 120
+
 
 extern const int allOutputPins[];
 extern long revolution;
@@ -46,9 +48,9 @@ extern unsigned long microsecondsPerRefresh;
 
 // Framebuffer
 extern bool primes[NUMPIXELS];
-extern bool blank[NUMPIXELS];
-extern bool slice[NUMPIXELS];  // This is where we store the pattern to be shown
-extern bool pattern[sizeOfPattern][NUMPIXELS];
+extern uint8_t blankSlice[NUMPIXELS * 3];
+extern uint8_t slice[NUMPIXELS * 3];  // This is where we store the pattern to be shown in a single column i r g b r g b format.
+extern uint8_t pattern[angularPixels * NUMPIXELS * 3];
 extern CRGB leds[NUMPIXELS];
 
 #endif

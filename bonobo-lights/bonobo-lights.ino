@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "functions.h"
+#include "patterns.h"
 
 CRGB leds[NUMPIXELS];
 
@@ -26,7 +27,7 @@ void setup() {
   Serial.begin(115200);
   sliceOnMicros = micros();
 
-  updateSlice(primes);
+  loadSlice(primes, CRGB::Crimson);
 }
 
 void loop() {
@@ -35,9 +36,10 @@ void loop() {
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
   // updatePolarIndex(now);  // calculates which pixel column and updates the frame. Uncomment for dynamic display
-  updateSlice(primes); // Fixed test pattern. Comment to get dynamic display.
-  
-  showSlice(CRGB::Crimson);
+  // updateSlice(primes); // Fixed test pattern. Comment to get dynamic display.
+
+  Serial.println(0xFF9933);
+  showSlice();
 
   step += 1;
 }
