@@ -28,7 +28,7 @@ void setup() {
   sliceOnMicros = micros();
 
   // loadSlice(primes, CRGB::Crimson);
-  memcpy(pattern, test, sizeof(test));
+  memcpy(pattern, test_6_16, sizeof(test_6_16));
 }
 
 void loop() {
