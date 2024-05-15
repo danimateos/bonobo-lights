@@ -1,4 +1,5 @@
-#include <sys/_stdint.h>
+#include "delay.h"
+#include "variant.h"
 #include <FastLED.h>
 #include "config.h"
 #include "functions.h"
@@ -25,9 +26,14 @@ void allOn() {
 }
 
 void loadSlice(uint8_t newSlice[NUMPIXELS * 3]) {
-  for (int i = 0; i < NUMPIXELS * 3; i++) {
-    memcpy(slice, newSlice, NUMPIXELS * 3);  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
-  }
+  // Serial.println("Before");
+  // printArray(slice, sizeof(slice));
+  // printArray(newSlice, sizeof(newSlice));
+
+  memcpy(slice, newSlice, NUMPIXELS * 3);  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
+  // Serial.println("After");
+  // printArray(slice, sizeof(slice));
+  // printArray(newSlice, sizeof(newSlice));
 }
 
 void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
@@ -91,10 +97,15 @@ void updatePolarIndex(long now) {
 
   if (polarIndex != previousPolarIndex) {
     if (polarIndex >= 0 && polarIndex < angularPixels) {
+      Serial.println(polarIndex * NUMPIXELS * 3);
       loadSlice(&pattern[polarIndex * NUMPIXELS * 3]);
-    } else {
+      cleared = false;
+    } else if (!cleared) {
       loadSlice(blankSlice);
+      cleared = true;
     }
+
+    showSlice();
   }
 }
 
@@ -105,33 +116,33 @@ void showSlice() {
   FastLED.show();
 }
 
-void loadPrimes(uint32_t color) {
-  // TODO use the primes bool array
-  for (int i = 0; i < NUMPIXELS; i++) {
-    if (primes[i]) {
-      slice[i] = color >> 16;     // R
-      slice[i + 1] = color >> 8;  // G
-      slice[i + 2] = color >> 0;  // B
-    } else {
-      slice[i] = 0;      // R
-      slice[i + 1] = 0;  // G
-      slice[i + 2] = 0;  // B
-    }
-  }
-}
 
 void printSerial() {
   char buffer[150];
   now = micros();
+  int polarIndex = (currentPosition() - offset) / angularResolution;
 
   if (now - lastSerialPrint > SERIAL_UPDATE) {
-    sprintf(buffer, "revolution:%d revolutionStart:%d current_postion:%.3f currentDurationOfRevolution:%d\n", revolution, revolutionStart, currentPosition(), currentDurationOfRevolution);
+    sprintf(buffer, "revolution:%d revolutionStart:%d polarIndex:%d currentDurationOfRevolution:%d\n", revolution, revolutionStart, polarIndex, currentDurationOfRevolution);
     Serial.println(buffer);
     lastSerialPrint = now;
   }
 }
 
+void printArray(uint8_t array[], int length) {
+  Serial.print("{");
+  for (int i = 0; i < length; i++) {
+    Serial.print(array[i]);
+    if (i < length - 1) {
+      Serial.print(", ");
+    }
+  }
+  Serial.println("}");
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // Variables
+/////////////////////////////////////////////////////////////////////////////
 
 const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
 
@@ -149,7 +160,7 @@ float offset = .1;
 float angularResolution = 1.0 / angularPixels;
 
 bool debug = false;
-
+bool cleared = false;
 
 unsigned long microsecondsPerFrame = 1000000 / frameRate;
 unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
@@ -161,5 +172,3 @@ bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, f
 uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
 uint8_t slice[NUMPIXELS * 3] = { 0 };
 uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };
-// memcpy(pattern, dudemabaike, sizeof(dudemabaike));
-// uint8_t pattern[angularPixels * NUMPIXELS * 3] = memcpy(void *, const void *, size_t);

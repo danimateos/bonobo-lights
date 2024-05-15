@@ -14,5 +14,6 @@ float currentPosition();
 void updatePolarIndex(long now);
 void showSlice();
 void printSerial();
+void printArray(uint8_t array[], int length);
 
 #endif

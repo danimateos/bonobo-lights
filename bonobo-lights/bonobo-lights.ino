@@ -27,7 +27,8 @@ void setup() {
   Serial.begin(115200);
   sliceOnMicros = micros();
 
-  loadSlice(primes, CRGB::Crimson);
+  // loadSlice(primes, CRGB::Crimson);
+  memcpy(pattern, test, sizeof(test));
 }
 
 void loop() {
@@ -35,11 +36,10 @@ void loop() {
 
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
-  // updatePolarIndex(now);  // calculates which pixel column and updates the frame. Uncomment for dynamic display
+  updatePolarIndex(now);  // calculates which pixel column and updates the frame. Uncomment for dynamic display
   // updateSlice(primes); // Fixed test pattern. Comment to get dynamic display.
 
-  Serial.println(0xFF9933);
-  showSlice();
+  printSerial();
 
   step += 1;
 }

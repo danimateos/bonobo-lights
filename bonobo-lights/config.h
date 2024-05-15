@@ -26,13 +26,14 @@
 #define frameRate 12          // For video
 #define refreshRate 5000
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
-#define angularPixels 120
+#define angularPixels 6
 
 
 extern const int allOutputPins[];
 extern long revolution;
 extern bool detected;
 extern bool previouslyDetected;
+extern bool cleared;
 extern long lastSerialPrint;
 extern long step;
 extern long now, sliceOnMicros, revolutionStart;
