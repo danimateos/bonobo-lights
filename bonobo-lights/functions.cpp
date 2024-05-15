@@ -97,7 +97,6 @@ void updatePolarIndex(long now) {
 
   if (polarIndex != previousPolarIndex) {
     if (polarIndex >= 0 && polarIndex < angularPixels) {
-      Serial.println(polarIndex * NUMPIXELS * 3);
       loadSlice(&pattern[polarIndex * NUMPIXELS * 3]);
       cleared = false;
     } else if (!cleared) {

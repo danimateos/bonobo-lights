@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
-#define NUMPIXELS 16  // Number of LEDs in strip
+#define NUMPIXELS 32  // Number of LEDs in strip
 #define STRIP_DATA PIN_SPI1_MOSI
 #define STRIP_CLOCK PIN_SPI1_SCK
 
@@ -26,7 +26,7 @@
 #define frameRate 12          // For video
 #define refreshRate 5000
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
-#define angularPixels 6
+#define angularPixels 240
 
 
 extern const int allOutputPins[];
