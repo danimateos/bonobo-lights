@@ -49,6 +49,7 @@ extern unsigned long microsecondsPerRefresh;
 
 // Framebuffer
 extern bool primes[NUMPIXELS];
+extern bool all[NUMPIXELS];
 extern uint8_t blankSlice[NUMPIXELS * 3];
 extern uint8_t slice[NUMPIXELS * 3];  // This is where we store the pattern to be shown in a single column i r g b r g b format.
 extern uint8_t pattern[angularPixels * NUMPIXELS * 3];

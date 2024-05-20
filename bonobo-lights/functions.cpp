@@ -167,7 +167,11 @@ unsigned long microsecondsPerRefresh = 1000000 / (refreshRate);
 // Framebuffer
 // uint8_t slice[NUMPIXELS * 3] = { 0 };
 
-bool primes[NUMPIXELS] = { false, true, true, false, true, false, true, false, false, false, true, false, true, false, false, false };
+bool primes[32] = { false, true, true, false, true, false, true, false, false, false,
+                    true, false, true, false, false, false, true, false, true, false,
+                    false, false, true, false, false, false, false, false, true, false,
+                    true, false };
+bool all[NUMPIXELS] = { false };
 uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
 uint8_t slice[NUMPIXELS * 3] = { 0 };
 uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };

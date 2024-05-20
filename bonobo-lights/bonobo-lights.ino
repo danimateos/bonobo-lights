@@ -28,6 +28,9 @@ void setup() {
   sliceOnMicros = micros();
 
   // loadSlice(primes, CRGB::Crimson);
+  for (int i = 0; i < NUMPIXELS; i++) {
+    all[i] = true;
+  };
 
   int smallerSize = min(sizeof(cool), sizeof(pattern));
   memcpy(pattern, cool, smallerSize);
@@ -39,7 +42,9 @@ void loop() {
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
   updatePolarIndex(now);  // calculates which pixel column and updates the frame. Uncomment for dynamic display
-  // updateSlice(primes); // Fixed test pattern. Comment to get dynamic display.
+
+  // loadSlice(all, 0x777777);  // Fixed test pattern. Comment to get dynamic display.
+  showSlice();
 
   printSerial();
 
