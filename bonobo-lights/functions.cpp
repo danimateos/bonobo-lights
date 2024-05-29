@@ -1,9 +1,14 @@
+#include <sys/_stdint.h>
 #include "delay.h"
 #include "variant.h"
 #include <FastLED.h>
 #include "config.h"
 #include "functions.h"
 #include "patterns.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// Functions
+/////////////////////////////////////////////////////////////////////////////
 
 //  From https://forum.arduino.cc/t/what-is-the-fastest-way-to-read-write-gpios-on-samd21-boards/907133/9
 static inline void fastWrite(int bitnum, int val) {
@@ -25,17 +30,12 @@ void allOn() {
   }
 }
 
-void loadSlice(uint8_t newSlice[NUMPIXELS * 3]) {
-  // Serial.println("Before");
-  // printArray(slice, sizeof(slice));
-  // printArray(newSlice, sizeof(newSlice));
 
-  memcpy(slice, newSlice, NUMPIXELS * 3);  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.
-  // Serial.println("After");
-  // printArray(slice, sizeof(slice));
-  // printArray(newSlice, sizeof(newSlice));
+void loadSlice(uint8_t *newSlice) {
+  slice = newSlice;
 }
 
+// Version for single-color patterns
 void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
   uint8_t r = (color >> 16);
   uint8_t g = (color >> 8) & 0xFF;
@@ -43,15 +43,16 @@ void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
 
   for (int i = 0; i < NUMPIXELS; i++) {
     if (newSlice[i]) {
-      slice[i * 3] = r;
-      slice[i * 3 + 1] = g;
-      slice[i * 3 + 2] = b;  // I'm sure there is a better way but I haven't figured it out. memcpy(frame, hey[pixel], nRows * nCols ); and my attempts with pointers crashed the board.}
+      scratchSlice[i * 3] = r;
+      scratchSlice[i * 3 + 1] = g;
+      scratchSlice[i * 3 + 2] = b;
     } else {
-      slice[i * 3] = 0;
-      slice[i * 3 + 1] = 0;
-      slice[i * 3 + 2] = 0;
+      scratchSlice[i * 3] = 0;
+      scratchSlice[i * 3 + 1] = 0;
+      scratchSlice[i * 3 + 2] = 0;
     }
   }
+  loadSlice((uint8_t *)&scratchSlice);
 }
 
 void updateSensor() {
@@ -97,10 +98,10 @@ void updatePolarIndex(long now) {
 
   if (polarIndex != previousPolarIndex) {
     if (polarIndex >= 0 && polarIndex < angularPixels) {
-      loadSlice(&pattern[polarIndex * NUMPIXELS * 3]);
+      loadSlice((uint8_t *)&pattern[polarIndex * NUMPIXELS * 3]);
       cleared = false;
     } else if (!cleared) {
-      loadSlice(blankSlice);
+      loadSlice((uint8_t *)&blankSlice);
       cleared = true;
     }
 
@@ -172,6 +173,7 @@ bool primes[32] = { false, true, true, false, true, false, true, false, false, f
                     false, false, true, false, false, false, false, false, true, false,
                     true, false };
 bool all[NUMPIXELS] = { false };
-uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
-uint8_t slice[NUMPIXELS * 3] = { 0 };
+const uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
+uint8_t *slice = (uint8_t *)&blankSlice;
+uint8_t scratchSlice[NUMPIXELS * 3] = { 0 };
 uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };

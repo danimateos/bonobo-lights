@@ -22,7 +22,7 @@
 #define HALL 7
 
 // UI Settings
-#define SERIAL_UPDATE 100000  // print every SERIAL_UPDATE microseconds
+#define SERIAL_UPDATE 500000  // print every SERIAL_UPDATE microseconds
 #define frameRate 12          // For video
 #define refreshRate 5000
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
@@ -50,9 +50,10 @@ extern unsigned long microsecondsPerRefresh;
 // Framebuffer
 extern bool primes[NUMPIXELS];
 extern bool all[NUMPIXELS];
-extern uint8_t blankSlice[NUMPIXELS * 3];
-extern uint8_t slice[NUMPIXELS * 3];  // This is where we store the pattern to be shown in a single column i r g b r g b format.
-extern uint8_t pattern[angularPixels * NUMPIXELS * 3];
+extern const uint8_t blankSlice[NUMPIXELS * 3];
+extern uint8_t *slice;  
+extern uint8_t scratchSlice[NUMPIXELS * 3];  // This is where we store the pattern to be shown in a single slice in r g b r g b format, if it needs building.
+extern uint8_t pattern[angularPixels * NUMPIXELS * 3];  // This is where we store the whole image to be shown in column-row-channel order
 extern CRGB leds[NUMPIXELS];
 
 #endif

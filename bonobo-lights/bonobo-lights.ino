@@ -45,7 +45,6 @@ void loop() {
 
   // loadSlice(all, 0x777777);  // Fixed test pattern. Comment to get dynamic display.
   showSlice();
-
   printSerial();
 
   step += 1;
