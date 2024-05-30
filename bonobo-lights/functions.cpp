@@ -182,3 +182,6 @@ const uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
 uint8_t *slice = (uint8_t *)&blankSlice;
 uint8_t scratchSlice[NUMPIXELS * 3] = { 0 };
 uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };
+
+
+

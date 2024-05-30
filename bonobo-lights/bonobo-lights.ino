@@ -32,8 +32,9 @@ void setup() {
     all[i] = true;
   };
 
-  int smallerSize = min(sizeof(cool), sizeof(pattern));
-  memcpy(pattern, cool, smallerSize);
+  int smallerSize = min(sizeof(coolData), sizeof(pattern));
+  memcpy(pattern, coolData, smallerSize);
+
 }
 
 void loop() {
