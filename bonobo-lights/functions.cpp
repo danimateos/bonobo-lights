@@ -41,6 +41,7 @@ void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
   uint8_t g = (color >> 8) & 0xFF;
   uint8_t b = color & 0xFF;
 
+  // Create color scratch slice
   for (int i = 0; i < NUMPIXELS; i++) {
     if (newSlice[i]) {
       scratchSlice[i * 3] = r;
@@ -52,6 +53,8 @@ void loadSlice(bool newSlice[NUMPIXELS], uint32_t color) {
       scratchSlice[i * 3 + 2] = 0;
     }
   }
+
+  // Change the pointer
   loadSlice((uint8_t *)&scratchSlice);
 }
 
@@ -91,10 +94,12 @@ float currentPosition() {
 }
 
 
-// Keeps track of which pixel number are we on and loads the slice if needed
+// Keeps track of which pixel number are we on and loads the slice (udpates ) if needed
 void updatePolarIndex(long now) {
   int previousPolarIndex = polarIndex;
-  polarIndex = (currentPosition() - offset) / angularResolution;
+  polarIndex = currentPosition() / angularResolution;
+
+
 
   if (polarIndex != previousPolarIndex) {
     if (polarIndex >= 0 && polarIndex < angularPixels) {
@@ -109,6 +114,7 @@ void updatePolarIndex(long now) {
   }
 }
 
+// Transmits
 void showSlice() {
   for (int i = 0; i < NUMPIXELS; i++) {
     leds[i] = CRGB(slice[3 * i], slice[3 * i + 1], slice[3 * i + 2]);
@@ -120,7 +126,7 @@ void showSlice() {
 void printSerial() {
   char buffer[150];
   now = micros();
-  int polarIndex = (currentPosition() - offset) / angularResolution;
+  int polarIndex = currentPosition() / angularResolution;
 
   if (now - lastSerialPrint > SERIAL_UPDATE) {
     sprintf(buffer, "revolution:%d revolutionStart:%d polarIndex:%d currentDurationOfRevolution:%d\n", revolution, revolutionStart, polarIndex, currentDurationOfRevolution);
@@ -156,7 +162,6 @@ long step = 0;
 long now, sliceOnMicros, revolutionStart;
 long currentDurationOfRevolution = 100000000;
 int polarIndex = 0;
-float offset = .1;
 float angularResolution = 1.0 / angularPixels;
 
 bool debug = false;

@@ -39,7 +39,6 @@ extern long step;
 extern long now, sliceOnMicros, revolutionStart;
 extern long currentDurationOfRevolution;
 extern int polarIndex;
-extern float offset;
 extern float angularResolution;
 
 extern bool debug;
@@ -52,7 +51,7 @@ extern bool primes[NUMPIXELS];
 extern bool all[NUMPIXELS];
 extern const uint8_t blankSlice[NUMPIXELS * 3];
 extern uint8_t *slice;  
-extern uint8_t scratchSlice[NUMPIXELS * 3];  // This is where we store the pattern to be shown in a single slice in r g b r g b format, if it needs building.
+extern uint8_t scratchSlice[NUMPIXELS * 3];  // This is where we store a single slice in r g b r g b format, if it needs building.
 extern uint8_t pattern[angularPixels * NUMPIXELS * 3];  // This is where we store the whole image to be shown in column-row-channel order
 extern CRGB leds[NUMPIXELS];
 

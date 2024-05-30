@@ -5,11 +5,11 @@
 // Pixels are stored in w, h, ch order
 // r00 g00 b00 r01 g01 b01 r02 g02 b02...
 // where g01 means green for x=0 y=1.
-struct Image {
+struct PatternMetadata {
   const uint16_t width;
   const uint16_t height;
   const uint8_t channels;
-  const uint8_t* data;
+  const bool cyclic;
 };
 
 // If I'm running low on RAM I can always use:
