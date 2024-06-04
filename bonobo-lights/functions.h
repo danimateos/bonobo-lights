@@ -15,5 +15,7 @@ void updatePolarIndex(long now);
 void showSlice();
 void printSerial();
 void printArray(uint8_t array[], int length);
+void loadPattern(uint8_t* newPattern, int sizeOfNewPattern);
+void takeUserInput();
 
 #endif

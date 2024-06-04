@@ -30,6 +30,17 @@ void allOn() {
   }
 }
 
+void loadPattern(uint8_t *newPattern, int sizeOfNewPattern) {
+  int smallerSize = min(sizeOfNewPattern, sizeof(pattern));
+  memcpy(pattern, newPattern, smallerSize);
+}
+
+void nextPattern() {
+  loadPattern((uint8_t *)all240patterns[currentPattern], angularPixels * NUMPIXELS * 3);
+
+  currentPattern++;
+  if (currentPattern == N_PATTERNS) { currentPattern = 0; }
+};
 
 void loadSlice(uint8_t *newSlice) {
   slice = newSlice;
@@ -135,6 +146,23 @@ void printSerial() {
   }
 }
 
+void takeUserInput() {
+  long now = micros();
+  bool prevButton1Pressed = button1Pressed;
+  bool prevButton2Pressed = button2Pressed;
+
+  if ((now - lastUIread) > UI_UPDATE) {
+    button1Pressed = !digitalRead(BUTTON_1);
+    button2Pressed = !digitalRead(BUTTON_2);
+    lastUIread = now;
+  };
+
+  if (button1Pressed && !prevButton1Pressed) {
+    Serial.println("nextPattern");
+    nextPattern();
+  }
+}
+
 void printArray(uint8_t array[], int length) {
   Serial.print("{");
   for (int i = 0; i < length; i++) {
@@ -150,7 +178,7 @@ void printArray(uint8_t array[], int length) {
 // Variables
 /////////////////////////////////////////////////////////////////////////////
 
-const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G}; //  , LED_B };
+const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G };  //  , LED_B };
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -181,6 +209,7 @@ const uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
 uint8_t *slice = (uint8_t *)&blankSlice;
 uint8_t scratchSlice[NUMPIXELS * 3] = { 0 };
 uint8_t pattern[angularPixels * NUMPIXELS * 3] = { 0 };
-
-
-
+uint8_t currentPattern = 0;
+long lastUIread;
+bool button1Pressed;
+bool button2Pressed;

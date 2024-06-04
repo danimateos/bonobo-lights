@@ -15,6 +15,8 @@ void setup() {
  pinMode(LED_G, OUTPUT);
 
   pinMode(HALL, INPUT);
+  pinMode(BUTTON_1, INPUT_PULLUP);
+  pinMode(BUTTON_2, INPUT_PULLUP);
 
   FastLED.addLeds<DOTSTAR, STRIP_DATA, STRIP_CLOCK, BGR, DATA_RATE_MHZ(24)>(leds, NUMPIXELS);
   FastLED.setBrightness(25);
@@ -26,8 +28,8 @@ void setup() {
   sliceOnMicros = micros();
 
 
-  int smallerSize = min(sizeof(coolData), sizeof(pattern));
-  memcpy(pattern, coolData, smallerSize);
+  
+  loadPattern((uint8_t *) coolData, angularPixels * NUMPIXELS * 3);
 
 }
 
@@ -37,9 +39,10 @@ void loop() {
   updateSensor();  // Every single turn of the loop we check the sensor and update our speed estimation
 
   updatePolarIndex(now);  // calculates which pixel column and updates the frame. Uncomment for dynamic display
-
   // loadSlice(primes, CRGB::Crimson);  // Fixed test pattern. Comment to get dynamic display.
   showSlice();
+
+  takeUserInput();
   printSerial();
 
   step += 1;
