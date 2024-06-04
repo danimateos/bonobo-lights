@@ -12,14 +12,14 @@
 // Status indicator LED
 #define LED_R 0
 #define LED_G 1
-#define LED_B 2
+// #define LED_B 2
 
 // Human input
-#define BUTTON_1 3
+#define BUTTON_1 7
 #define BUTTON_2 6
 
 // Sensor
-#define HALL 7
+#define HALL 3
 
 // UI Settings
 #define SERIAL_UPDATE 500000  // print every SERIAL_UPDATE microseconds

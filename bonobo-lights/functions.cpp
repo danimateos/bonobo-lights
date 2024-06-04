@@ -62,7 +62,7 @@ void updateSensor() {
   // Using an analog Hall effect sensor
   previouslyDetected = detected;
 
-  int difference = (int)analogRead(HALL) - 520;  // neutral point
+  int difference = (int)analogRead(HALL) - 518;  // neutral point
   detected = abs(difference) > HALL_MARGIN;
 
   if (debug) {
@@ -150,7 +150,7 @@ void printArray(uint8_t array[], int length) {
 // Variables
 /////////////////////////////////////////////////////////////////////////////
 
-const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };
+const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G}; //  , LED_B };
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
@@ -177,7 +177,6 @@ bool primes[32] = { false, true, true, false, true, false, true, false, false, f
                     true, false, true, false, false, false, true, false, true, false,
                     false, false, true, false, false, false, false, false, true, false,
                     true, false };
-bool all[NUMPIXELS] = { false };
 const uint8_t blankSlice[NUMPIXELS * 3] = { 0 };
 uint8_t *slice = (uint8_t *)&blankSlice;
 uint8_t scratchSlice[NUMPIXELS * 3] = { 0 };
