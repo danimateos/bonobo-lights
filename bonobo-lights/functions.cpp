@@ -43,7 +43,15 @@ void nextPattern() {
 };
 
 void loadSlice(uint8_t *newSlice) {
-  slice = newSlice;
+  for (int i = 0; i < NUMPIXELS; i++) {
+    for (int j = 0; j < 3; j++) {
+      scratchSlice[i * 3 + j] = newSlice[i * 3 + j] * brightnessCorrection[i];
+      Serial.print(scratchSlice[i * 3 + j]);
+      Serial.print(", ");
+    }
+  }
+  Serial.println("");
+  slice = scratchSlice;
 }
 
 // Version for single-color patterns
@@ -213,3 +221,8 @@ uint8_t currentPattern = 0;
 long lastUIread;
 bool button1Pressed;
 bool button2Pressed;
+
+const float brightnessCorrection[NUMPIXELS] = { 0.2694, 0.2929, 0.3165, 0.3401, 0.3636, 0.3872, 0.4108, 0.4343,
+                                 0.4579, 0.4815, 0.5051, 0.5286, 0.5522, 0.5758, 0.5993, 0.6229,
+                                 0.6465, 0.6700, 0.6936, 0.7172, 0.7407, 0.7643, 0.7879, 0.8114,
+                                 0.8350, 0.8586, 0.8822, 0.9057, 0.9293, 0.9529, 0.9764, 1.0000 };

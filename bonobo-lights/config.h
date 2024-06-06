@@ -58,6 +58,7 @@ extern uint8_t scratchSlice[NUMPIXELS * 3];             // This is where we stor
 extern uint8_t pattern[angularPixels * NUMPIXELS * 3];  // This is where we store the whole image to be shown in column-row-channel order
 extern uint8_t currentPattern;
 
+extern const float brightnessCorrection[NUMPIXELS];
 extern CRGB leds[NUMPIXELS];
 
 #endif

@@ -19,10 +19,8 @@ void setup() {
   pinMode(BUTTON_2, INPUT_PULLUP);
 
   FastLED.addLeds<DOTSTAR, STRIP_DATA, STRIP_CLOCK, BGR, DATA_RATE_MHZ(24)>(leds, NUMPIXELS);
-  FastLED.setBrightness(25);
+  FastLED.setBrightness(100);
 
-  digitalWrite(LED_R, HIGH);
-  digitalWrite(LED_G, HIGH);
 
   Serial.begin(115200);
   sliceOnMicros = micros();
