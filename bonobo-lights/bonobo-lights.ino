@@ -1,5 +1,5 @@
 #include <FastLED.h>
-#include <SPI.h>
+#include <Wire.h>
 
 #include "config.h"
 #include "functions.h"
@@ -9,10 +9,10 @@ CRGB leds[NUMPIXELS];
 
 void setup() {
 
- pinMode(STRIP_DATA, OUTPUT);
- pinMode(STRIP_CLOCK, OUTPUT);
- pinMode(LED_R, OUTPUT);
- pinMode(LED_G, OUTPUT);
+  pinMode(STRIP_DATA, OUTPUT);
+  pinMode(STRIP_CLOCK, OUTPUT);
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
 
   pinMode(HALL, INPUT);
   pinMode(BUTTON_1, INPUT_PULLUP);
@@ -21,14 +21,15 @@ void setup() {
   FastLED.addLeds<DOTSTAR, STRIP_DATA, STRIP_CLOCK, BGR, DATA_RATE_MHZ(24)>(leds, NUMPIXELS);
   FastLED.setBrightness(100);
 
+  Wire.begin(ADDRESS);
+  Wire.onReceive(readI2C);
 
   Serial.begin(115200);
   sliceOnMicros = micros();
 
 
-  
-  loadPattern((uint8_t *) coolData, angularPixels * NUMPIXELS * 3);
 
+  loadPattern((uint8_t *)coolData, angularPixels * NUMPIXELS * 3);
 }
 
 void loop() {

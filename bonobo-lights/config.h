@@ -29,6 +29,9 @@
 #define HALL_MARGIN 40  // Lower for more sensitivity, higher for more accuracy. Between 0 and 500.
 #define angularPixels 240
 
+// I2C
+#define ADDRESS 97 
+#define BUFFER_SIZE 50
 
 extern const int allOutputPins[];
 extern long revolution;
@@ -60,5 +63,8 @@ extern uint8_t currentPattern;
 
 extern const float brightnessCorrection[NUMPIXELS];
 extern CRGB leds[NUMPIXELS];
+
+// I2C buffer
+extern char buffer[BUFFER_SIZE];  // Create the character buffer
 
 #endif
