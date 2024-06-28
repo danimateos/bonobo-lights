@@ -10,10 +10,15 @@ function App() {
         <p>
           Click on the button to change pattern.
         </p>
-        <button>Click me if you dare man</button>
+        <button onClick={toggleLED}>Click me if you dare man</button>
       </header>
     </div>
   );
+}
+
+function toggleLED(){
+  fetch('/toggle')
+    .then(response => console.log(response.text))
 }
 
 export default App;
