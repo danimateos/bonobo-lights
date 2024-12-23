@@ -20,13 +20,13 @@ static inline void fastWrite(int bitnum, int val) {
 }
 
 void allOff() {
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 5; i++) {
     fastWrite(allOutputPins[i], LOW);
   }
 }
 
 void allOn() {
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 5; i++) {
     fastWrite(allOutputPins[i], HIGH);
   }
 }
@@ -199,7 +199,7 @@ void readI2C(int bytesToRead) {
 // Variables
 /////////////////////////////////////////////////////////////////////////////
 
-const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G };  //  , LED_B };
+const int allOutputPins[] = { STRIP_DATA, STRIP_CLOCK, LED_R, LED_G, LED_B };  //  , LED_B };
 
 // State machine. A frame is a superstate of which each row represents
 // one of 4 distinct substates, but I'm managing them independently
