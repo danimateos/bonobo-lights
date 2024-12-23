@@ -12,4 +12,4 @@ Pattern dudemabaike = {
   60, 16, 3, false, (uint8_t *) &dudemabaikeData
 };
 
-extern const uint8_t* all240patterns[N_PATTERNS] = { bonoboData, coolData, rainbowGradientData, mafaceData, trianglesData, dragonData, artichokeData,flagData, easterEggData};
+extern const uint8_t* all240patterns[N_PATTERNS] = { bonoboData, coolData, rainbowGradientData, trianglesData, dragonData, artichokeData, easterEggData};
